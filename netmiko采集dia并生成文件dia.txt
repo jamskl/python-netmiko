@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 from getpass import getpass
-import time
 from  netmiko import ConnectHandler
+import time
+import datetime
+current_time = datetime.datetime.now().strftime("%Y-%m-%d")
+
 
 with open(r'D:\pythonproject\produce_python\device_list\dia_device.txt') as f:
     for iplist in f.readlines():
@@ -20,6 +23,6 @@ with open(r'D:\pythonproject\produce_python\device_list\dia_device.txt') as f:
             # print(output)
             # output = connect.send_command('display  diagnostic-information')  # 下发单条配置命令使用 send_command
             # print(output)
-            f1 = open(f".\\result\\{ip}_dia.txt", "w")
+            f1 = open(f".\\result\\{ip}_dia_{current_time}.txt", "w")
             f1.write(output)
             f1.close()
