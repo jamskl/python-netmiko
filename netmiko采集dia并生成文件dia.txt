@@ -1,0 +1,25 @@
+#!/usr/bin/python3
+from getpass import getpass
+import time
+from  netmiko import ConnectHandler
+
+with open(r'D:\pythonproject\produce_python\device_list\dia_device.txt') as f:
+    for iplist in f.readlines():
+        ip = iplist.strip()
+        connection_info = {
+            'device_type':'hp_comware',
+            'ip':ip,
+            'username':'xxx',
+            'password':'yyy',
+            'timeout':30,
+        }
+        with ConnectHandler(**connection_info) as connect:#前面产生的字典通过变量调用，两个*代表后面的变量为字典
+            print(f'Succeefully connect to  {ip}')
+            commands =['display  diagnostic-information' , 'N ']
+            output = connect.send_config_set(commands,read_timeout=60)
+            # print(output)
+            # output = connect.send_command('display  diagnostic-information')  # 下发单条配置命令使用 send_command
+            # print(output)
+            f1 = open(f".\\result\\{ip}_dia.txt", "w")
+            f1.write(output)
+            f1.close()
