@@ -1,28 +1,46 @@
-#!/usr/bin/python3
 from getpass import getpass
-from  netmiko import ConnectHandler
+from netmiko import ConnectHandler
 import time
 import datetime
+import threading
+
 current_time = datetime.datetime.now().strftime("%Y-%m-%d")
 
+failed_ips = []
 
-with open(r'D:\pythonproject\produce_python\device_list\dia_device.txt') as f:
-    for iplist in f.readlines():
-        ip = iplist.strip()
-        connection_info = {
-            'device_type':'hp_comware',
-            'ip':ip,
-            'username':'xxx',
-            'password':'yyy',
-            'timeout':30,
-        }
-        with ConnectHandler(**connection_info) as connect:#前面产生的字典通过变量调用，两个*代表后面的变量为字典
-            print(f'Succeefully connect to  {ip}')
-            commands =['display  diagnostic-information' , 'N ']
-            output = connect.send_config_set(commands,read_timeout=60)
-            # print(output)
-            # output = connect.send_command('display  diagnostic-information')  # 下发单条配置命令使用 send_command
-            # print(output)
+def connect_and_execute(ip):
+    connection_info = {
+        'device_type': 'hp_comware',
+        'ip': ip,
+        'username': 'xxx',
+        'password': 'yyy',
+        # 'timeout':30,
+    }
+    try:
+        with ConnectHandler(**connection_info) as connect:
+            print(f'Successfully connected to {ip}')
+            commands = ['display diagnostic-information', 'N ']
+            output = connect.send_config_set(commands, read_timeout=120)
             f1 = open(f".\\result\\{ip}_dia_{current_time}.txt", "w")
             f1.write(output)
             f1.close()
+    except Exception as e:
+        print(f'Failed to connect to {ip}: {e}')
+        failed_ips.append(ip)
+
+with open(r'D:\pythonproject\produce_python\device_list\dia_device.txt') as f:
+    ip_list = [line.strip() for line in f.readlines()]
+
+threads = []
+
+for ip in ip_list:
+    thread = threading.Thread(target=connect_and_execute, args=(ip,))
+    threads.append(thread)
+    thread.start()
+
+for thread in threads:
+    thread.join()
+
+with open('login_failedip.txt', 'w') as f:
+    for ip in failed_ips:
+        f.write(f'Login failed for IP {ip}\n')
