@@ -1,0 +1,42 @@
+#!/usr/bin/python3
+import netmiko
+from getpass import getpass
+import time
+from netmiko import ConnectHandler
+import threading
+
+def connect_to_device(ip):
+    connection_info = {
+        'device_type':'hp_comware',
+        'ip':ip,
+        'username':'xxx',
+        'password':'yyy',
+    }
+    try:
+        with ConnectHandler(**connection_info) as connect:
+            print(f'Successfully connected to {ip}')
+            more_config = connect.send_config_from_file(r'D:\pythonproject\produce_python\device_config\h3c_hjsw_config')
+            print(more_config)
+    except Exception as e:
+        print(f'Failed to connect to {ip} : {e}')
+        failed_ips.append(ip)
+
+failed_ips = []
+
+with open(r'D:\pythonproject\produce_python\device_list\bghj_list.txt') as f:
+    ips = f.readlines()
+
+threads = []
+
+for ip in ips:
+    ip = ip.strip()
+    thread = threading.Thread(target=connect_to_device, args=(ip,))
+    threads.append(thread)
+    thread.start()
+
+for thread in threads:
+    thread.join()
+
+with open('result\config_login_failedip.txt', 'w') as f:
+    for ip in failed_ips:
+        f.write(f'登入失败IP {ip} \n')
